@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>PI·AI Radar — Live News</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Bebas+Neue&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#08080f;--ink2:#3a3a5c;--ink3:#7070a0;
+  --paper:#f4f5fc;--card:#fff;--card2:#eeeef8;
+  --line:rgba(60,60,120,.1);--line2:rgba(60,60,120,.2);
+  --acid:#00e5a0;--acid2:#00b8ff;--acid3:#ff3cac;
+  --warn:#ffb830;--err:#ff4060;--ok:#00e5a0;
+  --r:12px;--rs:8px;
+  --mono:'IBM Plex Mono',monospace;
+  --sans:'Space Grotesk',sans-serif;
+  --display:'Bebas Neue',sans-serif;
+}
+@media(prefers-color-scheme:dark){:root{
+  --ink:#e8e8f8;--ink2:#9090c0;--ink3:#5050a0;
+  --paper:#090912;--card:#111122;--card2:#181830;
+  --line:rgba(100,100,200,.12);--line2:rgba(100,100,200,.22);
+}}
+body{font-family:var(--sans);background:var(--paper);color:var(--ink);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:linear-gradient(rgba(0,229,160,.025) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,229,160,.025) 1px,transparent 1px);background-size:44px 44px}
+.wrap{max-width:1020px;margin:0 auto;padding:2rem 1.25rem;position:relative;z-index:1}
+
+/* HEADER */
+.hdr{display:flex;align-items:center;gap:18px;margin-bottom:2rem;padding-bottom:1.5rem;border-bottom:1px solid var(--line2)}
+.logo{width:54px;height:54px;border-radius:14px;flex-shrink:0;
+  background:linear-gradient(135deg,#00e5a0,#00b8ff);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 28px rgba(0,229,160,.3);position:relative;overflow:hidden}
+.logo::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,transparent 40%,rgba(255,255,255,.15))}
+.logo svg{width:26px;height:26px;z-index:1}
+.hdr-title{font-family:var(--display);font-size:40px;letter-spacing:2px;
+  background:linear-gradient(90deg,#00e5a0,#00b8ff,#ff3cac);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1}
+.hdr-sub{font-family:var(--mono);font-size:9.5px;color:var(--ink3);margin-top:4px;letter-spacing:1px;text-transform:uppercase}
+.hdr-right{margin-left:auto;display:flex;flex-direction:column;gap:5px;align-items:flex-end}
+.badge-live{font-family:var(--mono);font-size:9px;font-weight:700;padding:5px 13px;border-radius:20px;
+  border:1px solid var(--acid);color:var(--acid);background:rgba(0,229,160,.08);
+  white-space:nowrap;display:flex;align-items:center;gap:6px}
+.badge-src{font-family:var(--mono);font-size:8px;color:var(--ink3);
+  background:var(--card2);padding:3px 10px;border-radius:10px;border:1px solid var(--line)}
+.ldot{width:6px;height:6px;border-radius:50%;background:var(--acid);animation:blink 1.4s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+
+/* KEY CARD */
+.key-card{background:var(--card);border:1px solid var(--line2);border-radius:var(--r);
+  padding:1.2rem 1.4rem;margin-bottom:1.2rem;position:relative;overflow:hidden}
+.key-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,#00e5a0,#00b8ff,#ff3cac)}
+.kc-lbl{font-family:var(--mono);font-size:10px;font-weight:600;color:var(--acid);
+  text-transform:uppercase;letter-spacing:1px;margin-bottom:.9rem;display:flex;align-items:center;gap:8px}
+.kc-row{display:flex;gap:8px}
+.kc-in{flex:1;font-family:var(--mono);font-size:12px;padding:10px 13px;
+  border:1px solid var(--line2);border-radius:var(--rs);
+  background:var(--card2);color:var(--ink);outline:none;transition:border-color .2s,box-shadow .2s}
+.kc-in:focus{border-color:var(--acid);box-shadow:0 0 0 3px rgba(0,229,160,.12)}
+.kc-save{font-family:var(--sans);font-size:12px;font-weight:700;padding:10px 20px;
+  border-radius:var(--rs);border:none;background:linear-gradient(135deg,#00e5a0,#00b8ff);
+  color:#08080f;cursor:pointer;white-space:nowrap;transition:opacity .15s,transform .1s;
+  box-shadow:0 2px 12px rgba(0,229,160,.3)}
+.kc-save:hover{opacity:.9;transform:translateY(-1px)}
+.kc-hint{font-family:var(--mono);font-size:10px;color:var(--ink3);margin-top:9px;line-height:1.7}
+.kc-hint a{color:var(--acid);text-decoration:none}.kc-hint a:hover{text-decoration:underline}
+.kc-active{display:none;align-items:center;gap:12px;
+  background:rgba(0,229,160,.06);border:1px solid rgba(0,229,160,.25);
+  border-radius:var(--rs);padding:11px 15px}
+.kc-active.show{display:flex}
+.kc-active strong{font-size:13px;font-weight:700;color:var(--ok)}
+.kc-active span{font-family:var(--mono);font-size:11px;color:var(--ink3)}
+.kc-rm{margin-left:auto;font-family:var(--mono);font-size:10px;font-weight:600;
+  padding:6px 13px;border-radius:var(--rs);border:1px solid rgba(255,64,96,.35);
+  background:rgba(255,64,96,.07);color:var(--err);cursor:pointer;transition:all .15s}
+.kc-rm:hover{background:var(--err);color:#fff;border-color:var(--err)}
+
+/* SOURCE BAR */
+.src-bar{background:var(--card);border:1px solid var(--line2);border-radius:var(--r);
+  padding:.9rem 1.4rem;margin-bottom:1.2rem;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.src-icon{width:36px;height:36px;border-radius:8px;
+  background:linear-gradient(135deg,rgba(0,184,255,.1),rgba(0,229,160,.1));
+  border:1px solid var(--line2);display:flex;align-items:center;justify-content:center;
+  font-size:18px;flex-shrink:0}
+.src-info{flex:1}
+.src-name{font-size:13px;font-weight:700}
+.src-url{font-family:var(--mono);font-size:10px;color:var(--acid2);margin-top:2px}
+.src-pill{font-family:var(--mono);font-size:9px;font-weight:700;padding:4px 12px;
+  border-radius:20px;background:rgba(0,229,160,.1);border:1px solid rgba(0,229,160,.3);color:var(--ok)}
+.method-badge{font-family:var(--mono);font-size:9px;padding:3px 10px;border-radius:20px;
+  background:rgba(0,184,255,.08);border:1px solid rgba(0,184,255,.2);color:var(--acid2)}
+
+/* TOPICS */
+.topics{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:1.1rem}
+.tpill{font-family:var(--mono);font-size:10px;font-weight:600;padding:6px 15px;border-radius:20px;
+  border:1px solid var(--line2);cursor:pointer;color:var(--ink3);background:var(--card);
+  transition:all .15s;display:flex;align-items:center;gap:5px}
+.tpill:hover{border-color:var(--acid2);color:var(--acid2)}
+.tpill.active{background:linear-gradient(135deg,#00e5a0,#00b8ff);color:#08080f;
+  border-color:transparent;box-shadow:0 2px 12px rgba(0,229,160,.3);font-weight:700}
+
+/* CONTROLS */
+.ctrl{display:flex;gap:10px;margin-bottom:1.2rem;align-items:center;flex-wrap:wrap}
+.date-wrap{display:flex;align-items:center;gap:8px;background:var(--card);
+  border:1px solid var(--line2);border-radius:var(--rs);padding:8px 13px;flex-wrap:wrap}
+.date-lbl{font-family:var(--mono);font-size:10px;font-weight:600;color:var(--ink3);white-space:nowrap}
+.date-in{font-family:var(--mono);font-size:11px;font-weight:600;padding:6px 10px;
+  border:1px solid var(--line2);border-radius:var(--rs);background:var(--card2);
+  color:var(--ink);outline:none;cursor:pointer}
+.date-in:focus{border-color:var(--acid)}
+.presets{display:flex;gap:5px;flex-wrap:wrap}
+.ppill{font-family:var(--mono);font-size:9px;font-weight:700;padding:5px 11px;border-radius:20px;
+  border:1px solid var(--line2);cursor:pointer;color:var(--ink3);background:var(--card);
+  transition:all .15s;letter-spacing:.5px;text-transform:uppercase}
+.ppill:hover{border-color:var(--acid2);color:var(--acid2)}
+.ppill.active{background:linear-gradient(135deg,#00b8ff,#00e5a0);color:#08080f;border-color:transparent}
+.scan-btn{margin-left:auto;font-family:var(--sans);font-size:13px;font-weight:700;
+  padding:11px 26px;border-radius:var(--rs);border:none;
+  background:linear-gradient(135deg,#00e5a0,#00b8ff);color:#08080f;cursor:pointer;
+  display:flex;align-items:center;gap:9px;transition:opacity .15s,transform .1s;
+  box-shadow:0 3px 18px rgba(0,229,160,.35);white-space:nowrap}
+.scan-btn:hover:not(:disabled){opacity:.9;transform:translateY(-1px)}
+.scan-btn:disabled{opacity:.4;cursor:not-allowed;box-shadow:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner{width:14px;height:14px;border:2px solid rgba(8,8,15,.3);border-top-color:#08080f;
+  border-radius:50%;animation:spin .7s linear infinite;display:none}
+
+/* PROGRESS */
+.prog-wrap{margin-bottom:1.1rem;display:none}
+.prog-lbl{font-family:var(--mono);font-size:10px;color:var(--ink3);margin-bottom:5px;
+  display:flex;justify-content:space-between}
+.prog-bar{height:4px;background:var(--line2);border-radius:4px;overflow:hidden}
+.prog-fill{height:100%;background:linear-gradient(90deg,#00e5a0,#00b8ff);
+  border-radius:4px;width:0%;transition:width .4s ease}
+
+/* STATUS */
+.status{font-family:var(--mono);font-size:11px;color:var(--ink3);margin-bottom:1.2rem;
+  padding:9px 15px;border:1px solid var(--line);border-radius:var(--rs);
+  background:var(--card);display:flex;align-items:center;gap:9px}
+.sdot{width:6px;height:6px;border-radius:50%;background:var(--ink3);flex-shrink:0;transition:background .3s}
+.sdot.ok{background:var(--ok)}.sdot.err{background:var(--err)}
+.sdot.live{background:var(--acid);animation:blink 1s infinite}
+
+/* HOW IT WORKS */
+.info-banner{display:flex;align-items:flex-start;gap:12px;padding:12px 16px;
+  background:rgba(0,184,255,.05);border:1px solid rgba(0,184,255,.2);
+  border-radius:var(--rs);margin-bottom:1.2rem;font-family:var(--mono);
+  font-size:10.5px;color:var(--ink2);line-height:1.7}
+.info-banner svg{flex-shrink:0;color:var(--acid2);margin-top:1px}
+
+/* PANEL */
+.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+  overflow:hidden;margin-bottom:1.25rem;box-shadow:0 4px 24px rgba(0,0,0,.04)}
+.ph{display:flex;align-items:center;justify-content:space-between;
+  padding:11px 17px;border-bottom:1px solid var(--line);background:var(--card2)}
+.ph-l{display:flex;align-items:center;gap:10px}
+.ph-l span{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--ink3);
+  text-transform:uppercase;letter-spacing:.8px}
+.cnt{background:linear-gradient(135deg,#00e5a0,#00b8ff);color:#08080f;
+  font-family:var(--mono);font-size:9px;font-weight:700;padding:2px 10px;border-radius:10px}
+
+/* BRIEFING */
+.brief-body{padding:18px 20px;font-family:var(--mono);font-size:12.5px;line-height:1.9;
+  white-space:pre-wrap;color:var(--ink2);
+  background:linear-gradient(135deg,rgba(0,229,160,.02),rgba(0,184,255,.02))}
+.brief-body mark{background:rgba(0,229,160,.15);color:#009a6a;border-radius:3px;
+  padding:1px 5px;font-weight:600;font-style:normal}
+.brief-footer{display:flex;align-items:center;gap:10px;padding:8px 17px;
+  border-top:1px solid var(--line);background:var(--card2);
+  font-family:var(--mono);font-size:10px;color:var(--ink3)}
+
+/* FEED */
+.feed-body{max-height:740px;overflow-y:auto}
+.empty{padding:4rem 2rem;text-align:center;color:var(--ink3)}
+.empty-icon{font-size:36px;display:block;margin-bottom:14px;opacity:.2}
+.empty p{font-size:13px;line-height:1.8}
+
+.card{padding:18px 20px;border-bottom:1px solid var(--line);
+  transition:background .15s;position:relative;animation:fadeUp .3s ease}
+.card:last-child{border-bottom:none}
+.card:hover{background:var(--card2)}
+.card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;
+  background:linear-gradient(to bottom,#00e5a0,#00b8ff);opacity:0;transition:opacity .15s}
+.card:hover::before{opacity:1}
+@keyframes fadeUp{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+
+.card-meta{display:flex;align-items:center;gap:7px;margin-bottom:8px;flex-wrap:wrap}
+.ctag{font-family:var(--mono);font-size:9px;font-weight:700;padding:3px 9px;
+  border-radius:5px;text-transform:uppercase;letter-spacing:.3px}
+.t-ai{background:rgba(0,229,160,.12);color:#00956a;border:1px solid rgba(0,229,160,.2)}
+.t-dev{background:rgba(0,184,255,.12);color:#0077b8;border:1px solid rgba(0,184,255,.2)}
+.t-cloud{background:rgba(139,92,246,.12);color:#6b3fd4;border:1px solid rgba(139,92,246,.2)}
+.t-sec{background:rgba(255,64,96,.12);color:#b81030;border:1px solid rgba(255,64,96,.2)}
+.t-data{background:rgba(255,184,48,.12);color:#b87800;border:1px solid rgba(255,184,48,.2)}
+.t-em{background:rgba(255,60,172,.12);color:#990a6a;border:1px solid rgba(255,60,172,.2)}
+.t-prod{background:rgba(100,200,100,.12);color:#1a6a1a;border:1px solid rgba(100,200,100,.2)}
+.t-gen{background:var(--card2);color:var(--ink3);border:1px solid var(--line2)}
+
+.card-date{font-family:var(--mono);font-size:10px;color:var(--acid2);font-weight:600}
+.card-badge-real{font-family:var(--mono);font-size:9px;margin-left:auto;
+  background:rgba(0,229,160,.08);color:var(--ok);
+  padding:3px 9px;border-radius:4px;border:1px solid rgba(0,229,160,.2);font-weight:700}
+.card-cat{font-family:var(--mono);font-size:9px;color:var(--ink3);
+  background:var(--card2);padding:2px 8px;border-radius:4px;border:1px solid var(--line)}
+.card-title{font-size:15px;font-weight:700;line-height:1.45;margin-bottom:7px}
+.card-title a{color:inherit;text-decoration:none}
+.card-title a:hover{color:var(--acid2);text-decoration:underline}
+.card-excerpt{font-family:var(--mono);font-size:12px;color:var(--ink2);line-height:1.8;margin-bottom:9px}
+.card-excerpt mark{background:rgba(255,184,48,.18);color:#b87800;border-radius:3px;
+  padding:1px 4px;font-weight:600;font-style:normal}
+.card-summary{font-family:var(--mono);font-size:12px;color:var(--ink2);
+  line-height:1.8;border-left:2px solid var(--acid);padding-left:10px;margin-bottom:9px;
+  background:rgba(0,229,160,.03);padding:8px 12px;border-radius:0 6px 6px 0}
+.card-summary mark{background:rgba(255,184,48,.18);color:#b87800;border-radius:3px;
+  padding:1px 4px;font-weight:600;font-style:normal}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+.chip{font-family:var(--mono);font-size:9px;font-weight:700;padding:3px 10px;border-radius:20px;
+  background:rgba(0,184,255,.08);color:var(--acid2);border:1px solid rgba(0,184,255,.18)}
+.card-footer{display:flex;align-items:center;gap:10px;margin-top:9px;padding-top:9px;
+  border-top:1px dashed var(--line);flex-wrap:wrap}
+.card-link a{font-family:var(--mono);font-size:10px;color:var(--acid2);
+  text-decoration:none;display:flex;align-items:center;gap:4px}
+.card-link a:hover{text-decoration:underline}
+.card-scanned{font-family:var(--mono);font-size:9px;color:var(--ink3);opacity:.5;margin-left:auto}
+
+/* LOG */
+.log-acts{display:flex;gap:6px}
+.lbtn{font-family:var(--mono);font-size:9px;font-weight:700;padding:5px 11px;border-radius:5px;
+  border:1px solid var(--line2);cursor:pointer;background:transparent;color:var(--ink3);
+  transition:all .15s;text-transform:uppercase;letter-spacing:.5px}
+.lbtn:hover{background:linear-gradient(135deg,#00e5a0,#00b8ff);color:#08080f;border-color:transparent}
+.log-body{max-height:180px;overflow-y:auto;padding:10px 15px;
+  background:var(--card2);font-family:var(--mono);font-size:10.5px}
+.ll{display:flex;gap:12px;line-height:1.9}
+.ll .ts{color:var(--ink3);opacity:.5;flex-shrink:0}
+.ll .msg{color:var(--ink2)}
+.ll.ok .ts{color:var(--ok);opacity:1}.ll.err .ts{color:var(--err);opacity:1}.ll.warn .ts{color:var(--warn);opacity:1}
+
+/* FOOTER */
+.footer{margin-top:2rem;text-align:center;font-family:var(--mono);font-size:10px;color:var(--ink3);line-height:2.2}
+.footer a{color:var(--acid2);text-decoration:none}.footer a:hover{text-decoration:underline}
+.footer-brand{font-weight:700;background:linear-gradient(90deg,#00e5a0,#00b8ff);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--line2);border-radius:10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="logo">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#08080f" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+    </svg>
+  </div>
+  <div>
+    <div class="hdr-title">PI·AI RADAR</div>
+    <div class="hdr-sub">Live RSS Scraper · Groq LLaMA Summarizer · Real News Only</div>
+  </div>
+  <div class="hdr-right">
+    <div class="badge-live"><div class="ldot"></div>LIVE RSS FEED</div>
+    <div class="badge-src">📡 artificialintelligence-news.com</div>
+  </div>
+</div>
+
+<!-- KEY CARD -->
+<div class="key-card">
+  <div class="kc-lbl">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+    Groq API Key — for AI summaries
+  </div>
+  <div id="keyInputSection">
+    <div class="kc-row">
+      <input id="groqKey" class="kc-in" type="password" placeholder="gsk_••••••••••••••••••••••••••••••••••••"/>
+      <button class="kc-save" onclick="saveKey()">Activate</button>
+    </div>
+    <div class="kc-hint">Free → <a href="https://console.groq.com/keys" target="_blank">console.groq.com/keys</a> · Used only to summarise real scraped articles · Model: llama-3.3-70b-versatile</div>
+  </div>
+  <div id="keyActiveBar" class="kc-active">
+    <span style="font-size:20px">🔑</span>
+    <div><strong>✓ Key Active</strong><br><span id="keyPreview"></span></div>
+    <button class="kc-rm" onclick="removeKey()">Remove</button>
+  </div>
+</div>
+
+<!-- SOURCE BAR -->
+<div class="src-bar">
+  <div class="src-icon">📰</div>
+  <div class="src-info">
+    <div class="src-name">AI News — artificialintelligence-news.com</div>
+    <div class="src-url">RSS Feed → rss2json API → Real articles scraped on every Scan</div>
+  </div>
+  <div class="src-pill">✓ LIVE RSS</div>
+  <div class="method-badge" id="methodBadge">RSS → JSON</div>
+</div>
+
+<!-- TOPICS -->
+<div class="topics" id="topicPills">
+  <div class="tpill active" data-topic="All">🌐 All Topics</div>
+  <div class="tpill" data-topic="AI & Machine Learning">🤖 AI &amp; ML</div>
+  <div class="tpill" data-topic="Software Development & Coding">💻 Dev &amp; Code</div>
+  <div class="tpill" data-topic="Cloud Computing & DevOps">☁️ Cloud &amp; DevOps</div>
+  <div class="tpill" data-topic="Cybersecurity">🔒 Security</div>
+  <div class="tpill" data-topic="Data Science & Analytics">📊 Data Science</div>
+  <div class="tpill" data-topic="Emerging Technologies">🚀 Emerging Tech</div>
+  <div class="tpill" data-topic="Product & System Thinking">🧩 Product &amp; Systems</div>
+</div>
+
+<!-- CONTROLS -->
+<div class="ctrl">
+  <div class="date-wrap">
+    <span class="date-lbl">📅 DATE:</span>
+    <input id="datePick" class="date-in" type="date"/>
+    <div class="presets">
+      <div class="ppill active" data-preset="today">Today</div>
+      <div class="ppill" data-preset="week">This Week</div>
+      <div class="ppill" data-preset="month">This Month</div>
+      <div class="ppill" data-preset="all">All Recent</div>
+    </div>
+  </div>
+  <button id="scanBtn" class="scan-btn" onclick="scan()">
+    <div id="spinner" class="spinner"></div>
+    <span id="scanLabel">⚡ Scan Now</span>
+  </button>
+</div>
+
+<!-- PROGRESS -->
+<div class="prog-wrap" id="progWrap">
+  <div class="prog-lbl"><span id="progText">Fetching RSS feed…</span><span id="progPct">0%</span></div>
+  <div class="prog-bar"><div class="prog-fill" id="progFill"></div></div>
+</div>
+
+<!-- STATUS -->
+<div class="status">
+  <div class="sdot" id="sdot"></div>
+  <span id="statusText">Ready — click ⚡ Scan Now to fetch live articles from AI News RSS</span>
+</div>
+
+<!-- INFO BANNER -->
+<div class="info-banner">
+  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+  <div>
+    <strong>How it works:</strong> Scan Now → fetches the live RSS feed from <strong>artificialintelligence-news.com</strong> via RSS-to-JSON API (client-side, no server proxy needed) → extracts real article titles, dates, excerpts &amp; links → Groq LLaMA writes a clean summary of each real article. Every card links directly to the original article. Zero hallucination.
+  </div>
+</div>
+
+<!-- BRIEFING -->
+<div class="panel" id="briefingPanel" style="display:none">
+  <div class="ph">
+    <div class="ph-l"><span>⚡ AI Briefing</span></div>
+    <span id="briefTime" style="font-family:var(--mono);font-size:10px;color:var(--ink3)"></span>
+  </div>
+  <div class="brief-body" id="briefBody"></div>
+  <div class="brief-footer">
+    <span style="color:var(--ok)">✓ Based on real scraped articles · Groq LLaMA 3.3-70b</span>
+    <span style="margin-left:auto">PI·AI Radar</span>
+  </div>
+</div>
+
+<!-- FEED -->
+<div class="panel">
+  <div class="ph">
+    <div class="ph-l">
+      <span>📡 Live News Feed</span>
+      <span class="cnt" id="feedCount">0</span>
+    </div>
+    <span id="topicLabel" style="font-family:var(--mono);font-size:10px;color:var(--acid2)">
+      All Topics · artificialintelligence-news.com
+    </span>
+  </div>
+  <div class="feed-body" id="feedBody">
+    <div class="empty">
+      <span class="empty-icon">◎</span>
+      <p>No articles yet.<br/>Click <strong>⚡ Scan Now</strong> to fetch live from<br/><strong>artificialintelligence-news.com RSS</strong></p>
+    </div>
+  </div>
+</div>
+
+<!-- LOG -->
+<div class="panel">
+  <div class="ph">
+    <div class="ph-l"><span>📋 Activity Log</span></div>
+    <div class="log-acts">
+      <button class="lbtn" onclick="copyLog()">Copy</button>
+      <button class="lbtn" onclick="exportAll()">Export</button>
+      <button class="lbtn" onclick="clearAll()" style="color:var(--err)">Clear</button>
+    </div>
+  </div>
+  <div class="log-body" id="logBody"></div>
+</div>
+
+<div class="footer">
+  <span class="footer-brand">PI·AI RADAR</span> · RSS from artificialintelligence-news.com · Summaries by Groq LLaMA 3.3-70b<br/>
+  <a href="https://www.artificialintelligence-news.com" target="_blank">artificialintelligence-news.com</a> ·
+  <a href="https://console.groq.com/keys" target="_blank">Get free Groq key</a>
+</div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════
+   PI·AI RADAR v4 — RSS Edition
+   Source  : artificialintelligence-news.com/feed/
+   Method  : RSS → multiple JSON conversion APIs (client-side)
+   Summaries: Groq LLaMA 3.3-70b (title + excerpt → clean summary)
+   
+   WHY RSS NOT SCRAPING:
+   CORS proxies return 403 because the target site blocks them.
+   RSS-to-JSON services (rss2json, feedjsonify) work from the
+   browser because they server-side fetch the RSS feed and return
+   clean JSON with CORS headers. No proxy needed.
+═══════════════════════════════════════════════════ */
+
+const GROQ_URL  = "https://api.groq.com/openai/v1/chat/completions";
+const RSS_URL   = "https://www.artificialintelligence-news.com/feed/";
+
+// Multiple RSS→JSON services, tried in order until one works
+const RSS_SERVICES = [
+  {
+    name: "rss2json",
+    build: (rssUrl) => `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}&count=50`,
+    parse: (data) => {
+      if (data.status !== "ok" && !data.items) throw new Error("rss2json: " + (data.message||"bad response"));
+      return (data.items || []).map(item => ({
+        title   : stripHtml(item.title || ""),
+        url     : item.link || item.guid || "",
+        date    : item.pubDate ? new Date(item.pubDate).toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"}) : "",
+        dateObj : item.pubDate ? new Date(item.pubDate) : null,
+        excerpt : stripHtml(item.description || item.content || "").slice(0, 300),
+        category: (item.categories || []).join(", "),
+        source  : "AI News"
+      }));
+    }
+  },
+  {
+    name: "feedjsonify",
+    build: (rssUrl) => `https://feedjsonify.vercel.app/feed?url=${encodeURIComponent(rssUrl)}`,
+    parse: (data) => {
+      const items = data.items || data.entries || data.feed?.entry || [];
+      return items.map(item => ({
+        title   : stripHtml(item.title?.["#text"] || item.title || ""),
+        url     : item.link?.["@href"] || item.link || item.url || "",
+        date    : item.published || item.updated || item.pubDate || "",
+        dateObj : item.published ? new Date(item.published) : null,
+        excerpt : stripHtml(item.summary?.["#text"] || item.summary || item.description || "").slice(0, 300),
+        category: "",
+        source  : "AI News"
+      }));
+    }
+  },
+  {
+    name: "allorigins-json",
+    build: (rssUrl) => `https://api.allorigins.win/get?url=${encodeURIComponent(rssUrl)}`,
+    parse: (data) => {
+      // Returns raw RSS XML in data.contents — parse it
+      const xml = data.contents || "";
+      return parseRssXml(xml);
+    }
+  },
+  {
+    name: "corsproxy-rss",
+    build: (rssUrl) => `https://corsproxy.io/?${encodeURIComponent(rssUrl)}`,
+    parse: async (data, rawText) => {
+      return parseRssXml(rawText || "");
+    },
+    rawMode: true  // expects text not JSON
+  },
+  {
+    name: "jsonlink",
+    build: (rssUrl) => `https://jsonlink.io/api/extract?url=${encodeURIComponent(rssUrl)}`,
+    parse: (data) => {
+      return [];  // fallback only
+    }
+  }
+];
+
+/* ─── XML RSS Parser (fallback for raw XML responses) ─── */
+function parseRssXml(xml) {
+  if (!xml || xml.length < 100) return [];
+  try {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(xml, "text/xml");
+    const items = Array.from(doc.querySelectorAll("item"));
+    return items.map(item => {
+      const title   = item.querySelector("title")?.textContent || "";
+      const link    = item.querySelector("link")?.textContent || item.querySelector("guid")?.textContent || "";
+      const pubDate = item.querySelector("pubDate")?.textContent || "";
+      const desc    = item.querySelector("description")?.textContent || "";
+      const cats    = Array.from(item.querySelectorAll("category")).map(c => c.textContent).join(", ");
+      const dateObj = pubDate ? new Date(pubDate) : null;
+      return {
+        title   : stripHtml(title),
+        url     : link.trim(),
+        date    : dateObj ? dateObj.toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"}) : pubDate,
+        dateObj,
+        excerpt : stripHtml(desc).slice(0, 300),
+        category: cats,
+        source  : "AI News"
+      };
+    }).filter(a => a.title.length > 5);
+  } catch(e) { return []; }
+}
+
+function stripHtml(html) {
+  if (!html) return "";
+  return html.replace(/<[^>]+>/g, " ").replace(/&amp;/g,"&").replace(/&lt;/g,"<")
+    .replace(/&gt;/g,">").replace(/&quot;/g,'"').replace(/&#8217;/g,"'")
+    .replace(/&#8216;/g,"'").replace(/&#8220;/g,'"').replace(/&#8221;/g,'"')
+    .replace(/\s+/g," ").trim();
+}
+
+let items = [], logs = [], activeTopic = "All", activePreset = "today", scanning = false;
+
+/* ─── TOPIC KEYWORDS ─── */
+const TOPIC_KEYS = {
+  "All": [],
+  "AI & Machine Learning": ["llm","gpt","model","claude","gemini","llama","neural","transformer","openai","anthropic","deepmind","mistral","hugging face","generative","machine learning","deep learning","foundation model","fine-tun","multimodal","ai agent","benchmark","natural language","large language"],
+  "Software Development & Coding": ["github","developer","coding","sdk","api","open-source","open source","typescript","python","rust","framework","library","ide","vs code","npm","package","programming","software engineering"],
+  "Cloud Computing & DevOps": ["aws","azure","gcp","kubernetes","docker","serverless","cloud","devops","infrastructure","terraform","k8s","container","platform engineering","cloud computing"],
+  "Cybersecurity": ["security","cyber","vulnerability","breach","cve","exploit","ransomware","phishing","malware","threat","zero-day","patch","siem","soc","encryption","infosec","hack","attack"],
+  "Data Science & Analytics": ["data","analytics","databricks","snowflake","bigquery","spark","pandas","pipeline","etl","mlops","dataset","dbt","data warehouse","bi ","jupyter","data engineering"],
+  "Emerging Technologies": ["quantum","augmented reality","virtual reality","xr ","robotics","autonomous","spatial computing","wearable","brain-computer","edge computing","drone","ar headset","vr headset"],
+  "Product & System Thinking": ["product launch","platform","saas","b2b","roadmap","architecture","microservice","observability","distributed","enterprise","startup","funding","product design","system design"]
+};
+
+const HIGHLIGHT_WORDS = ["GPT","Claude","Gemini","LLaMA","OpenAI","Anthropic","Google","Meta","Microsoft","NVIDIA","AWS","Azure","GCP","Kubernetes","Docker","Python","TypeScript","GitHub","CVE","zero-day","quantum","robotics","transformer","RAG","multimodal","open-source","Databricks","Snowflake","Mistral","DeepMind","agentic","AI agent"];
+
+/* ─── INIT ─── */
+window.onload = () => {
+  document.getElementById("datePick").value = new Date().toISOString().split("T")[0];
+  const k = localStorage.getItem("pi_groq_key");
+  if (k) showKeyActive(k);
+  try {
+    const s = JSON.parse(localStorage.getItem("pi_items_v4") || "[]");
+    if (s.length) { items = s; renderFeed(); log("Loaded " + s.length + " cached items.", "ok"); }
+    const lb = localStorage.getItem("pi_briefing_v4");
+    if (lb) { const d = JSON.parse(lb); showBriefing(d.text, d.time); }
+  } catch(e) {}
+
+  document.getElementById("topicPills").addEventListener("click", e => {
+    const pill = e.target.closest(".tpill");
+    if (!pill) return;
+    document.querySelectorAll(".tpill").forEach(p => p.classList.remove("active"));
+    pill.classList.add("active");
+    activeTopic = pill.dataset.topic;
+    document.getElementById("topicLabel").textContent = activeTopic + " · artificialintelligence-news.com";
+    renderFeed();
+  });
+
+  document.querySelectorAll(".ppill").forEach(p => {
+    p.addEventListener("click", () => {
+      document.querySelectorAll(".ppill").forEach(x => x.classList.remove("active"));
+      p.classList.add("active");
+      activePreset = p.dataset.preset;
+      if (activePreset === "today") document.getElementById("datePick").value = new Date().toISOString().split("T")[0];
+      else document.getElementById("datePick").value = "";
+    });
+  });
+
+  document.getElementById("datePick").addEventListener("change", e => {
+    if (e.target.value) {
+      document.querySelectorAll(".ppill").forEach(x => x.classList.remove("active"));
+      activePreset = "custom";
+    }
+  });
+};
+
+/* ─── DATE RANGE ─── */
+function getDateRange() {
+  const now = new Date(); now.setHours(23,59,59,999);
+  if (activePreset === "week") {
+    const s = new Date(now); s.setDate(now.getDate() - 7); s.setHours(0,0,0,0);
+    return { start: s, end: now, label: "This Week" };
+  }
+  if (activePreset === "month") {
+    const s = new Date(now); s.setDate(now.getDate() - 30); s.setHours(0,0,0,0);
+    return { start: s, end: now, label: "This Month" };
+  }
+  if (activePreset === "all") {
+    const s = new Date(now); s.setDate(now.getDate() - 90); s.setHours(0,0,0,0);
+    return { start: s, end: now, label: "All Recent (90 days)" };
+  }
+  const val = document.getElementById("datePick").value;
+  if (activePreset === "custom" && val) {
+    const d = new Date(val + "T00:00:00");
+    const s = new Date(d); s.setDate(d.getDate() - 3);
+    const e2 = new Date(d); e2.setDate(d.getDate() + 3);
+    return { start: s, end: e2, label: "Around " + d.toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"}) };
+  }
+  const s = new Date(now); s.setHours(0,0,0,0);
+  return { start: s, end: now, label: "Today" };
+}
+
+function isInRange(article, range) {
+  if (!article.dateObj || !range.start) return true;
+  return article.dateObj >= range.start && article.dateObj <= range.end;
+}
+
+function matchesTopic(article) {
+  if (activeTopic === "All") return true;
+  const keys = TOPIC_KEYS[activeTopic] || [];
+  const hay = ((article.title||"") + " " + (article.category||"") + " " + (article.excerpt||"")).toLowerCase();
+  return keys.some(k => hay.includes(k));
+}
+
+/* ─── KEY MANAGEMENT ─── */
+function saveKey() {
+  const k = document.getElementById("groqKey").value.trim();
+  if (!k) { alert("Enter your Groq API key.\nFree at: console.groq.com/keys"); return; }
+  localStorage.setItem("pi_groq_key", k);
+  showKeyActive(k);
+  log("Groq API key saved.", "ok");
+}
+function showKeyActive(k) {
+  document.getElementById("keyInputSection").style.display = "none";
+  document.getElementById("keyActiveBar").classList.add("show");
+  document.getElementById("keyPreview").textContent = k.slice(0,8) + "•".repeat(Math.min(20, k.length-8));
+}
+function removeKey() {
+  if (!confirm("Remove key?")) return;
+  localStorage.removeItem("pi_groq_key");
+  document.getElementById("groqKey").value = "";
+  document.getElementById("keyActiveBar").classList.remove("show");
+  document.getElementById("keyInputSection").style.display = "block";
+  log("Key removed.", "warn");
+}
+function getKey() { return localStorage.getItem("pi_groq_key") || document.getElementById("groqKey").value.trim() || ""; }
+
+/* ─── UTILS ─── */
+function nowTs() { return new Date().toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit",second:"2-digit"}); }
+function dtStr() { return new Date().toLocaleString("en-IN",{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"}); }
+function esc(s) { return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function setStatus(t, s) {
+  document.getElementById("statusText").textContent = t;
+  const d = document.getElementById("sdot");
+  d.className = "sdot" + (s==="ok"?" ok":s==="err"?" err":s==="live"?" live":"");
+}
+function setProgress(pct, text) {
+  document.getElementById("progFill").style.width = pct + "%";
+  document.getElementById("progPct").textContent = pct + "%";
+  if (text) document.getElementById("progText").textContent = text;
+}
+function log(msg, type="info") {
+  const t = nowTs();
+  logs.push({t, msg, type, full: "["+t+"] "+msg});
+  const line = document.createElement("div");
+  line.className = "ll " + type;
+  line.innerHTML = `<span class="ts">[${t}]</span><span class="msg">${esc(msg)}</span>`;
+  const b = document.getElementById("logBody");
+  b.appendChild(line); b.scrollTop = b.scrollHeight;
+  localStorage.setItem("pi_logs_v4", JSON.stringify(logs.slice(-300)));
+}
+function highlight(text) {
+  if (!text) return "";
+  let h = esc(text);
+  HIGHLIGHT_WORDS.forEach(w => {
+    const re = new RegExp("\\b(" + w.replace(/[.*+?^${}()|[\]\\]/g,"\\$&") + ")\\b","gi");
+    h = h.replace(re, "<mark>$1</mark>");
+  });
+  return h;
+}
+function detectTopic(text) {
+  const t = text.toLowerCase();
+  for (const [topic, keys] of Object.entries(TOPIC_KEYS)) {
+    if (topic === "All") continue;
+    if (keys.some(k => t.includes(k))) return topic;
+  }
+  return "AI & Machine Learning";
+}
+function topicTag(topic) {
+  const map = {
+    "AI & Machine Learning":       {l:"AI/ML",   c:"t-ai"},
+    "Software Development & Coding":{l:"Dev",    c:"t-dev"},
+    "Cloud Computing & DevOps":    {l:"Cloud",   c:"t-cloud"},
+    "Cybersecurity":               {l:"Security",c:"t-sec"},
+    "Data Science & Analytics":    {l:"Data",    c:"t-data"},
+    "Emerging Technologies":       {l:"Emerging",c:"t-em"},
+    "Product & System Thinking":   {l:"Product", c:"t-prod"}
+  };
+  return map[topic] || {l:"AI",c:"t-gen"};
+}
+
+/* ─── FETCH RSS via multiple services ─── */
+async function fetchRss() {
+  for (const svc of RSS_SERVICES) {
+    try {
+      const url = svc.build(RSS_URL);
+      log(`Trying: ${svc.name}…`, "info");
+      document.getElementById("methodBadge").textContent = svc.name;
+
+      const res = await fetch(url, { headers: { "Accept": "application/json,text/plain,*/*" } });
+
+      if (!res.ok) {
+        log(`${svc.name}: HTTP ${res.status}`, "warn");
+        continue;
+      }
+
+      let articles = [];
+      if (svc.rawMode) {
+        const text = await res.text();
+        articles = svc.parse ? await svc.parse(null, text) : parseRssXml(text);
+      } else {
+        const text = await res.text();
+        let data;
+        try { data = JSON.parse(text); }
+        catch(e) {
+          // Maybe it returned raw XML
+          articles = parseRssXml(text);
+          if (articles.length > 0) {
+            log(`✓ ${svc.name}: Got ${articles.length} articles (XML fallback)`, "ok");
+            return articles;
+          }
+          log(`${svc.name}: Not JSON or XML`, "warn");
+          continue;
+        }
+        articles = svc.parse(data);
+      }
+
+      if (articles.length > 0) {
+        log(`✓ ${svc.name}: Got ${articles.length} articles`, "ok");
+        return articles;
+      }
+      log(`${svc.name}: 0 articles parsed`, "warn");
+    } catch(e) {
+      log(`${svc.name} error: ${e.message}`, "warn");
+    }
+  }
+  throw new Error("All RSS services failed. Check your internet connection and try again.");
+}
+
+/* ─── GROQ: Batch summarize articles ─── */
+async function groqSummarize(articles, key) {
+  if (!key) return articles.map(a => ({...a, aiSummary: ""}));
+
+  const articleList = articles.slice(0, 12).map((a, i) =>
+    `[${i+1}] TITLE: ${a.title}\nDATE: ${a.date}\nEXCERPT: ${a.excerpt || "(no excerpt)"}`
+  ).join("\n\n");
+
+  try {
+    const res = await fetch(GROQ_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + key },
+      body: JSON.stringify({
+        model: "llama-3.3-70b-versatile",
+        messages: [
+          {
+            role: "system",
+            content: `You are PI·AI Radar's news summarizer. You receive real article titles and excerpts scraped from artificialintelligence-news.com.
+Write a precise 2-sentence summary for each article. Be factual — only use what's in the title and excerpt.
+Output ONLY this format, no extra text:
+[1] <summary here>
+[2] <summary here>`
+          },
+          {
+            role: "user",
+            content: `Summarize these ${Math.min(articles.length,12)} articles:\n\n${articleList}`
+          }
+        ],
+        max_tokens: 1800,
+        temperature: 0.15
+      })
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(()=>({}));
+      throw new Error(err?.error?.message || res.status);
+    }
+
+    const data = await res.json();
+    const raw = data?.choices?.[0]?.message?.content || "";
+    const summaryMap = {};
+    const re = /\[(\d+)\]\s*([\s\S]*?)(?=\[\d+\]|$)/g;
+    let m;
+    while ((m = re.exec(raw)) !== null) {
+      summaryMap[parseInt(m[1])] = m[2].trim();
+    }
+    return articles.map((a, i) => ({
+      ...a,
+      aiSummary: summaryMap[i+1] || ""
+    }));
+  } catch(e) {
+    log("Groq summarize error: " + e.message, "warn");
+    return articles.map(a => ({...a, aiSummary: ""}));
+  }
+}
+
+/* ─── GROQ: Briefing ─── */
+async function groqBriefing(articles, key, range) {
+  if (!key || !articles.length) return;
+  const titles = articles.slice(0,10).map((a,i) => `${i+1}. ${a.title} (${a.date})`).join("\n");
+  try {
+    const res = await fetch(GROQ_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + key },
+      body: JSON.stringify({
+        model: "llama-3.3-70b-versatile",
+        messages: [{
+          role: "user",
+          content: `Based on these real articles from artificialintelligence-news.com (${range.label}), write a 3-4 sentence executive briefing on the key themes. Name specific companies and technologies from the titles. Start with "For ${range.label},"\n\n${titles}`
+        }],
+        max_tokens: 350, temperature: 0.2
+      })
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    const text = data?.choices?.[0]?.message?.content || "";
+    if (text) {
+      const time = dtStr();
+      showBriefing(text, time);
+      localStorage.setItem("pi_briefing_v4", JSON.stringify({text, time}));
+    }
+  } catch(e) { log("Briefing error: " + e.message, "warn"); }
+}
+
+/* ─── RENDER ─── */
+function renderFeed() {
+  const body = document.getElementById("feedBody");
+  const filtered = activeTopic === "All" ? items : items.filter(a => matchesTopic(a));
+  document.getElementById("feedCount").textContent = filtered.length;
+  document.getElementById("topicLabel").textContent = activeTopic + " · artificialintelligence-news.com";
+
+  if (!filtered.length) {
+    body.innerHTML = items.length
+      ? `<div class="empty"><span class="empty-icon">🔍</span><p>No articles match <strong>${esc(activeTopic)}</strong>.<br/>Try "All Topics" or scan again.</p></div>`
+      : `<div class="empty"><span class="empty-icon">◎</span><p>No articles yet.<br/>Click <strong>⚡ Scan Now</strong> to fetch from<br/><strong>artificialintelligence-news.com RSS</strong></p></div>`;
+    return;
+  }
+
+  body.innerHTML = "";
+  [...filtered].forEach(article => {
+    const card = document.createElement("div");
+    card.className = "card";
+    const topic = article.detectedTopic || "AI & Machine Learning";
+    const tag = topicTag(topic);
+
+    const chips = HIGHLIGHT_WORDS
+      .filter(w => (article.title||"").toLowerCase().includes(w.toLowerCase()))
+      .slice(0, 5);
+    const chipsHtml = chips.length
+      ? `<div class="chips">${chips.map(c=>`<span class="chip">${esc(c)}</span>`).join("")}</div>` : "";
+
+    const catHtml = article.category
+      ? `<span class="card-cat">${esc(article.category.split(",")[0].trim())}</span>` : "";
+
+    // Show AI summary if available, otherwise show excerpt
+    const summaryHtml = article.aiSummary
+      ? `<div class="card-summary">${highlight(article.aiSummary)}</div>`
+      : (article.excerpt ? `<div class="card-excerpt">${highlight(article.excerpt)}</div>` : "");
+
+    card.innerHTML = `
+      <div class="card-meta">
+        <span class="ctag ${tag.c}">${tag.l}</span>
+        <span class="card-date">${esc(article.date || "Recent")}</span>
+        ${catHtml}
+        <span class="card-badge-real">✓ Live RSS</span>
+      </div>
+      <div class="card-title"><a href="${esc(article.url||"#")}" target="_blank" rel="noopener">${esc(article.title)}</a></div>
+      ${summaryHtml}
+      ${chipsHtml}
+      <div class="card-footer">
+        <span style="font-family:var(--mono);font-size:9px;color:var(--ok)">✓ Scraped from AI News</span>
+        ${article.url ? `<span class="card-link"><a href="${esc(article.url)}" target="_blank" rel="noopener">↗ Read full article</a></span>` : ""}
+        <span class="card-scanned">Scanned: ${esc(article.scanned||dtStr())}</span>
+      </div>`;
+    body.appendChild(card);
+  });
+}
+
+function showBriefing(text, time) {
+  document.getElementById("briefBody").innerHTML = highlight(text);
+  document.getElementById("briefTime").textContent = time || dtStr();
+  document.getElementById("briefingPanel").style.display = "block";
+}
+
+/* ─── MAIN SCAN ─── */
+async function scan() {
+  if (scanning) return;
+  scanning = true;
+
+  const btn = document.getElementById("scanBtn");
+  const sp  = document.getElementById("spinner");
+  const lbl = document.getElementById("scanLabel");
+  const pw  = document.getElementById("progWrap");
+  btn.disabled = true; sp.style.display = "inline-block"; lbl.textContent = "Scanning...";
+  pw.style.display = "block";
+
+  const key = getKey();
+  const range = getDateRange();
+  log(`⚡ Scan: ${range.label} · Topic: ${activeTopic}`, "ok");
+  setStatus("Fetching RSS from artificialintelligence-news.com…", "live");
+
+  try {
+    /* STEP 1: Fetch RSS */
+    setProgress(10, "Fetching live RSS feed from AI News…");
+    const allArticles = await fetchRss();
+    setProgress(40, `Got ${allArticles.length} articles from RSS…`);
+
+    if (!allArticles.length) throw new Error("No articles in RSS feed.");
+
+    /* STEP 2: Date filter */
+    const inRange = (activePreset === "all")
+      ? allArticles
+      : allArticles.filter(a => isInRange(a, range));
+
+    log(`Date filter (${range.label}): ${inRange.length}/${allArticles.length} match`, "ok");
+
+    let toProcess = inRange;
+    if (!toProcess.length) {
+      log("No articles in selected date range — showing latest 15 instead.", "warn");
+      toProcess = allArticles.slice(0, 15);
+    }
+
+    /* STEP 3: Deduplicate vs existing */
+    const existingUrls = new Set(items.map(i => i.url));
+    const newArticles = toProcess.filter(a => !existingUrls.has(a.url));
+    log(`${newArticles.length} new articles (${toProcess.length - newArticles.length} already in feed)`, "info");
+
+    /* STEP 4: Detect topics + add metadata */
+    const enriched = newArticles.map(a => ({
+      ...a,
+      detectedTopic: detectTopic(a.title + " " + a.category + " " + a.excerpt),
+      scanned: dtStr()
+    }));
+
+    /* STEP 5: Groq summarize (batches of 12) */
+    let summarized = [];
+    if (key && enriched.length > 0) {
+      setProgress(55, `Getting AI summaries for ${enriched.length} articles…`);
+      const batchSize = 12;
+      for (let i = 0; i < enriched.length; i += batchSize) {
+        const batch = enriched.slice(i, i + batchSize);
+        setProgress(55 + Math.round((i / enriched.length) * 30), `Summarizing ${i+1}–${Math.min(i+batchSize, enriched.length)} of ${enriched.length}…`);
+        const done = await groqSummarize(batch, key);
+        summarized = summarized.concat(done);
+      }
+    } else {
+      summarized = enriched;
+      if (!key) log("No Groq key — showing excerpts only (summaries disabled)", "warn");
+    }
+
+    /* STEP 6: Merge into feed */
+    items = [...summarized, ...items].slice(0, 120);
+    localStorage.setItem("pi_items_v4", JSON.stringify(items));
+    renderFeed();
+
+    /* STEP 7: Briefing */
+    setProgress(90, "Generating briefing…");
+    if (key && summarized.length > 0) await groqBriefing(summarized, key, range);
+
+    setProgress(100, "Done!");
+    setTimeout(() => { pw.style.display = "none"; setProgress(0, ""); }, 1200);
+
+    log(`✓ Added ${summarized.length} articles. Feed total: ${items.length}.`, "ok");
+    setStatus(`✓ ${summarized.length} real articles from AI News · ${nowTs()} · Total: ${items.length}`, "ok");
+
+  } catch(err) {
+    log("❌ " + err.message, "err");
+    setStatus("Error: " + err.message, "err");
+    pw.style.display = "none";
+  }
+
+  scanning = false; btn.disabled = false; sp.style.display = "none"; lbl.textContent = "⚡ Scan Now";
+}
+
+/* ─── EXPORT / LOG ─── */
+function copyLog() {
+  navigator.clipboard.writeText(logs.map(l=>l.full).join("\n")).then(()=>log("Copied.","ok"));
+}
+function exportAll() {
+  const ts = new Date().toISOString().replace(/[:.]/g,"-").slice(0,19);
+  const body = items.map((a,i) =>
+    `[${i+1}] ${a.title}\n    Date   : ${a.date}\n    URL    : ${a.url}\n    Summary: ${a.aiSummary||a.excerpt||""}\n    Scanned: ${a.scanned}`
+  ).join("\n\n");
+  const brief = document.getElementById("briefBody").textContent;
+  const out = `PI·AI RADAR v4\nSource: artificialintelligence-news.com RSS\nGenerated: ${dtStr()}\n${"=".repeat(70)}\n\nBRIEFING\n${"=".repeat(70)}\n${brief||"None."}\n\n${"=".repeat(70)}\nARTICLES (${items.length})\n${"=".repeat(70)}\n${body}\n\n${"=".repeat(70)}\nLOG\n${"=".repeat(70)}\n${logs.map(l=>l.full).join("\n")}`;
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([out],{type:"text/plain"}));
+  a.download = "pi_ai_radar_" + ts + ".log";
+  a.click();
+  log("Exported.", "ok");
+}
+function clearAll() {
+  if (!confirm("Clear all articles and logs?")) return;
+  items = []; logs = [];
+  ["pi_items_v4","pi_logs_v4","pi_briefing_v4"].forEach(k => localStorage.removeItem(k));
+  document.getElementById("logBody").innerHTML = "";
+  document.getElementById("briefingPanel").style.display = "none";
+  renderFeed(); log("Cleared.", "info");
+  setStatus("Cleared. Ready to scan.", "");
+}
+</script>
+</body>
+</html>
